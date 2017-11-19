@@ -42,22 +42,18 @@ func StringArrayToRecord(array []string) (Record, error){
     var err error
     id, err := strconv.Atoi(array[0])
     if err != nil {
-        fmt.Println("Malformed Record:", err)
         return record, err
     }
     lat, err := strconv.ParseFloat(array[1], 64)
     if err != nil {
-        fmt.Println("Malformed Record:", err)
         return record, err
     }
     lng, err := strconv.ParseFloat(array[2], 64)
     if err != nil {
-        fmt.Println("Malformed Record:", err)
         return record, err
     }
     timestamp, err := strconv.ParseInt(array[3], 0, 64)
     if err != nil {
-        fmt.Println("Malformed Record:", err)
         return record, err
     }
     record = Record{id, lat, lng, timestamp}
@@ -81,24 +77,25 @@ func EstimateSegmentFare(segment *Segment) float64 {
     if segment.U <= 10.0 {
         return IdleChargePerHour * segment.DeltaT.Hours()
     }
+    // thisDayStart := time.Date(segment.T1.Year(), segment.T1.Month(), segment.T1.Day(), 0, 0, 0, 0, time.Local)
+    nextDayStart := time.Date(segment.T1.Year(), segment.T1.Month(), segment.T1.Day() + 1, 0, 0, 0, 0, time.Local)
+    thisDayfiveMorning := time.Date(segment.T1.Year(), segment.T1.Month(), segment.T1.Day(), 5, 0, 0, 0, time.Local)
     switch {
         // Assume timestamps are SANE and t1 is no possible to be before
         // midnight and t2 after 5 o clock next day
         // If both measured times are in the day range
-        case segment.T1.Hour() > 5 && segment.T2.Hour() > 5:
+        case segment.T1.After(thisDayfiveMorning) && ( segment.T2.Before(nextDayStart) || segment.T2.Equal(nextDayStart) ):
             return NormalChargePerKilometer * segment.DeltaS
         // If both measured times are in the night range
-        case segment.T1.Hour() < 5 && segment.T2.Hour() < 5:
+        case ( segment.T1.Before(thisDayfiveMorning) || segment.T1.Equal(thisDayfiveMorning) ) && ( segment.T2.Before(thisDayfiveMorning) || segment.T2.Equal(thisDayfiveMorning) ):
             return NightChargePerKilometer * segment.DeltaS
-        case segment.T1.Hour() > 5 && segment.T2.Hour() < 5:
-            midnight := time.Date(segment.T1.Year(), segment.T1.Month(), segment.T1.Day() + 1, 0, 0, 0, 0, time.Local)
-            dayRatio := midnight.Sub(segment.T1).Hours() / segment.DeltaT.Hours()
-            nightRatio := segment.T2.Sub(midnight).Hours() / segment.DeltaT.Hours()
+        case segment.T1.After(thisDayfiveMorning) && segment.T2.After(nextDayStart) :
+            dayRatio := nextDayStart.Sub(segment.T1).Hours() / segment.DeltaT.Hours()
+            nightRatio := segment.T2.Sub(nextDayStart).Hours() / segment.DeltaT.Hours()
             return  NormalChargePerKilometer * segment.DeltaS * dayRatio +  NightChargePerKilometer * segment.DeltaS * nightRatio
-        case segment.T1.Hour() < 5 && segment.T2.Hour() > 5:
-            fiveMorning := time.Date(segment.T1.Year(), segment.T1.Month(), segment.T1.Day(), 5, 0, 0, 0, time.Local)
-            nightRatio := fiveMorning.Sub(segment.T1).Hours() / segment.DeltaT.Hours()
-            dayRatio := segment.T2.Sub(fiveMorning).Hours() / segment.DeltaT.Hours()
+        case (segment.T1.Before(thisDayfiveMorning) || segment.T1.Equal(thisDayfiveMorning)) && segment.T2.After(thisDayfiveMorning):
+            nightRatio := thisDayfiveMorning.Sub(segment.T1).Hours() / segment.DeltaT.Hours()
+            dayRatio := segment.T2.Sub(thisDayfiveMorning).Hours() / segment.DeltaT.Hours()
             return  NormalChargePerKilometer * segment.DeltaS * dayRatio +  NightChargePerKilometer * segment.DeltaS * nightRatio
     }
     return 0.0
