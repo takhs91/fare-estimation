@@ -127,6 +127,7 @@ type FareEstimate struct {
     Fare float64
 }
 
+// FareEstimateToStringArray turns a FareEstimate ojects to slice of strings
 func (f FareEstimate) FareEstimateToStringArray() []string {
     var array []string
     array = append(array, strconv.Itoa(f.ID))

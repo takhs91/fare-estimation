@@ -6,7 +6,7 @@ import (
 )
 
 // https://gist.github.com/cevaris/bc331cbe970b03816c6b
-var EPSILON float64 = 0.00000001
+var EPSILON  = 0.00000001
 func floatEquals(a, b float64) bool {
     if ((a - b) < EPSILON && (b - a) < EPSILON) {
         return true
