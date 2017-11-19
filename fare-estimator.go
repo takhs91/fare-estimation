@@ -24,14 +24,14 @@ func (s Segment) String() string {
 
 
 type Record struct {
-    Id int
+    ID int
     Lat float64
     Lng float64
     Timestamp int64
 }
 
 func (r Record) String() string {
-	return fmt.Sprintf("Id: %v, Lat: %v, Long: %v, Timestamp: %v", r.Id, r.Lat, r.Lng, r.Timestamp)
+	return fmt.Sprintf("ID: %v, Lat: %v, Long: %v, Timestamp: %v", r.ID, r.Lat, r.Lng, r.Timestamp)
 }
 
 func StringArrayToRecord(array []string) (Record, error){
@@ -70,27 +70,26 @@ const NightChargePerKilometer = 1.30
 func EstimateSegmentFare(segment *Segment) float64 {
     if segment.U <= 10.0 {
         return IdleChargePerHour * segment.DeltaT.Hours()
-    } else {
-        switch {
-            // Assume timestamps are SANE and t1 is no possible to be before
-            // midnight and t2 after 5 o clock next day
-            // If both measured times are in the day range
-            case segment.T1.Hour() > 5 && segment.T2.Hour() > 5:
-                return NormalChargePerKilometer * segment.DeltaS
-            // If both measured times are in the night range
-            case segment.T1.Hour() < 5 && segment.T2.Hour() < 5:
-                return NightChargePerKilometer * segment.DeltaS
-            case segment.T1.Hour() > 5 && segment.T2.Hour() < 5:
-                midnight := time.Date(segment.T1.Year(), segment.T1.Month(), segment.T1.Day() + 1, 0, 0, 0, 0, time.Local)
-                day_ratio := midnight.Sub(segment.T1).Hours() / segment.DeltaT.Hours()
-                night_ratio := segment.T2.Sub(midnight).Hours() / segment.DeltaT.Hours()
-                return  NormalChargePerKilometer * segment.DeltaS * day_ratio +  NightChargePerKilometer * segment.DeltaS * night_ratio
-            case segment.T1.Hour() < 5 && segment.T2.Hour() > 5:
-                five_morning := time.Date(segment.T1.Year(), segment.T1.Month(), segment.T1.Day(), 5, 0, 0, 0, time.Local)
-                night_ratio := five_morning.Sub(segment.T1).Hours() / segment.DeltaT.Hours()
-                day_ratio := segment.T2.Sub(five_morning).Hours() / segment.DeltaT.Hours()
-                return  NormalChargePerKilometer * segment.DeltaS * day_ratio +  NightChargePerKilometer * segment.DeltaS * night_ratio
-        }
+    }
+    switch {
+        // Assume timestamps are SANE and t1 is no possible to be before
+        // midnight and t2 after 5 o clock next day
+        // If both measured times are in the day range
+        case segment.T1.Hour() > 5 && segment.T2.Hour() > 5:
+            return NormalChargePerKilometer * segment.DeltaS
+        // If both measured times are in the night range
+        case segment.T1.Hour() < 5 && segment.T2.Hour() < 5:
+            return NightChargePerKilometer * segment.DeltaS
+        case segment.T1.Hour() > 5 && segment.T2.Hour() < 5:
+            midnight := time.Date(segment.T1.Year(), segment.T1.Month(), segment.T1.Day() + 1, 0, 0, 0, 0, time.Local)
+            dayRatio := midnight.Sub(segment.T1).Hours() / segment.DeltaT.Hours()
+            nightRatio := segment.T2.Sub(midnight).Hours() / segment.DeltaT.Hours()
+            return  NormalChargePerKilometer * segment.DeltaS * dayRatio +  NightChargePerKilometer * segment.DeltaS * nightRatio
+        case segment.T1.Hour() < 5 && segment.T2.Hour() > 5:
+            fiveMorning := time.Date(segment.T1.Year(), segment.T1.Month(), segment.T1.Day(), 5, 0, 0, 0, time.Local)
+            nightRatio := fiveMorning.Sub(segment.T1).Hours() / segment.DeltaT.Hours()
+            dayRatio := segment.T2.Sub(fiveMorning).Hours() / segment.DeltaT.Hours()
+            return  NormalChargePerKilometer * segment.DeltaS * dayRatio +  NightChargePerKilometer * segment.DeltaS * nightRatio
     }
     return 0.0
 }
@@ -100,17 +99,17 @@ func EstimateFare(segments *[]Segment) float64 {
     if segments == nil {
         return 0.0
     }
-    var fare_estimate float64
-    fare_estimate = Flag
-    fmt.Println(fare_estimate)
+    var fareEstimate float64
+    fareEstimate = Flag
+    fmt.Println(fareEstimate)
     for i, segment:= range(*segments) {
-        fare_estimate += EstimateSegmentFare(&segment)
-        fmt.Println("For segment ", i, " Fair Estimate: ", fare_estimate)
+        fareEstimate += EstimateSegmentFare(&segment)
+        fmt.Println("For segment ", i, " Fair Estimate: ", fareEstimate)
     }
-    if fare_estimate < MinimumFare {
-        fare_estimate = MinimumFare
+    if fareEstimate < MinimumFare {
+        fareEstimate = MinimumFare
     }
-    return fare_estimate
+    return fareEstimate
 }
 
 
@@ -162,10 +161,10 @@ func main() {
         fmt.Println("Curent Record: ", currentRecord)
         if previousRecord == nil {
             previousRecord = &currentRecord
-            lineCount += 1
+            lineCount++
             continue
         }
-        if previousRecord.Id == currentRecord.Id {
+        if previousRecord.ID == currentRecord.ID {
             coord1 := haversine.Coord{Lat: previousRecord.Lat, Lon: previousRecord.Lng}
             coord2 := haversine.Coord{Lat: currentRecord.Lat, Lon: currentRecord.Lng}
             _, deltaS := haversine.Distance(coord1, coord2)
@@ -188,6 +187,6 @@ func main() {
 
 
         previousRecord = &currentRecord
-        lineCount += 1
+        lineCount++
     }
 }
