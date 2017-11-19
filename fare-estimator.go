@@ -112,10 +112,10 @@ func EstimateFare(segments *[]Segment) float64 {
     }
     var fareEstimate float64
     fareEstimate = Flag
-    fmt.Println(fareEstimate)
-    for i, segment:= range(*segments) {
+    // fmt.Println(fareEstimate)
+    for _, segment:= range(*segments) {
         fareEstimate += EstimateSegmentFare(&segment)
-        fmt.Println("For segment ", i, " Fair Estimate: ", fareEstimate)
+        // fmt.Println("For segment ", i, " Fair Estimate: ", fareEstimate)
     }
     if fareEstimate < MinimumFare {
         fareEstimate = MinimumFare
@@ -179,21 +179,14 @@ func main() {
         } else if err != nil {
             log.Fatal(err)
         }
-        // record is an array of string so is directly printable
-        fmt.Println("Record", lineCount, "is", record, "and has", len(record), "fields")
-        // and we can iterate on top of that
-        for i := 0; i < len(record); i++ {
-            fmt.Println(" ", record[i])
-        }
-        fmt.Println()
 
         var currentRecord Record
         currentRecord, err = StringArrayToRecord(record)
         if err != nil {
             log.Fatalln("Malformed Record:", err)
         }
-        fmt.Println("Previous Record: ", previousRecord)
-        fmt.Println("Curent Record: ", currentRecord)
+        // fmt.Println("Previous Record: ", previousRecord)
+        // fmt.Println("Curent Record: ", currentRecord)
         if previousRecord == nil {
             previousRecord = &currentRecord
             lineCount++
@@ -203,15 +196,15 @@ func main() {
             coord1 := haversine.Coord{Lat: previousRecord.Lat, Lon: previousRecord.Lng}
             coord2 := haversine.Coord{Lat: currentRecord.Lat, Lon: currentRecord.Lng}
             _, deltaS := haversine.Distance(coord1, coord2)
-             fmt.Println("Segment Kilometers:", deltaS)
+            //  fmt.Println("Segment Kilometers:", deltaS)
             t1 := time.Unix(previousRecord.Timestamp,  0)
-            fmt.Println("Previous Record Time: ", t1)
+            // fmt.Println("Previous Record Time: ", t1)
             t2 := time.Unix(currentRecord.Timestamp, 0)
-            fmt.Println("Current Record Time: ", t2)
+            // fmt.Println("Current Record Time: ", t2)
             deltaT := t2.Sub(t1)
-            fmt.Println("Delta: ", deltaT)
+            // fmt.Println("Delta: ", deltaT)
             u := deltaS / deltaT.Hours()
-            fmt.Println("Velocity: ", u)
+            // fmt.Println("Velocity: ", u)
             if u < 100.0 {
                 segments = append(segments, Segment{U: u, DeltaS: deltaS, DeltaT: deltaT, T1:t1, T2:t2})
             }
