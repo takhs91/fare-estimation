@@ -5,6 +5,7 @@ import (
     "fmt"
     "io"
     "os"
+    "log"
     "time"
     "strconv"
     "github.com/umahmood/haversine"
@@ -139,10 +140,7 @@ func (f FareEstimate) FareEstimateToStringArray() []string {
 func main() {
     file, err := os.Open("paths.csv")
     if err != nil {
-        // err is printable
-        // elements passed are separated by space automatically
-        fmt.Println("Error:", err)
-        return
+        log.Fatal(err)
     }
     // automatically call Close() at the end of current method
     defer file.Close()
@@ -163,10 +161,10 @@ func main() {
         if err == io.EOF {
             fare := EstimateFare(&segments)
             rideFareEstimates = append(rideFareEstimates, FareEstimate{ID:previousRecord.ID, Fare: fare})
+            segments = nil
             break
         } else if err != nil {
-            fmt.Println("Error:", err)
-            return
+            log.Fatal(err)
         }
         // record is an array of string so is directly printable
         fmt.Println("Record", lineCount, "is", record, "and has", len(record), "fields")
@@ -179,8 +177,7 @@ func main() {
         var currentRecord Record
         currentRecord, err = StringArrayToRecord(record)
         if err != nil {
-            fmt.Println("Malformed Record:", err)
-            return
+            log.Fatalln("Malformed Record:", err)
         }
         fmt.Println("Previous Record: ", previousRecord)
         fmt.Println("Curent Record: ", currentRecord)
@@ -222,15 +219,14 @@ func main() {
     // Open the results file
 	resultsFile, err := os.OpenFile("estimated_fares.csv", os.O_CREATE|os.O_WRONLY, 0666)
 	if err != nil {
-        fmt.Println("Error:", err)
-        return
+        log.Fatal(err)
     }
     defer resultsFile.Close()
+
     writer := csv.NewWriter(resultsFile)
     for _, v := range(rideFareEstimates) {
         if err := writer.Write(v.FareEstimateToStringArray()); err != nil {
-            fmt.Println("Error:", err)
-            return
+            log.Fatalln("error writing record to csv:", err)
 		}
     }
 
@@ -238,8 +234,7 @@ func main() {
 	writer.Flush()
 
 	if err := writer.Error(); err != nil {
-        fmt.Println("Error:", err)
-        return
+        log.Fatal(err)
 	}
 
 
