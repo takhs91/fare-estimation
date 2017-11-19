@@ -207,6 +207,10 @@ func main() {
             // fmt.Println("Velocity: ", u)
             if u < 100.0 {
                 segments = append(segments, Segment{U: u, DeltaS: deltaS, DeltaT: deltaT, T1:t1, T2:t2})
+            } else {
+                fmt.Println("Filtered line out ", lineCount, "with Record ", currentRecord, "found U ", u)
+                lineCount++
+                continue
             }
         } else {
             fare := EstimateFare(&segments)
