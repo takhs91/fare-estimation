@@ -123,6 +123,12 @@ func EstimateFare(segments *[]Segment) float64 {
 }
 
 
+// FareEstimate holds ID and estimated fares tuples
+type FareEstimate struct {
+    ID int
+    Fare float64
+}
+
 func main() {
     file, err := os.Open("paths.csv")
     if err != nil {
@@ -140,6 +146,7 @@ func main() {
     reader.Comma = ','
     lineCount := 0
 
+    var rideFareEstimates []FareEstimate
     var segments []Segment
     var previousRecord *Record
     for {
@@ -147,7 +154,8 @@ func main() {
         record, err := reader.Read()
         // end-of-file is fitted into err
         if err == io.EOF {
-            EstimateFare(&segments)
+            fare := EstimateFare(&segments)
+            rideFareEstimates = append(rideFareEstimates, FareEstimate{ID:previousRecord.ID, Fare: fare})
             break
         } else if err != nil {
             fmt.Println("Error:", err)
@@ -191,12 +199,16 @@ func main() {
                 segments = append(segments, Segment{U: u, DeltaS: deltaS, DeltaT: deltaT, T1:t1, T2:t2})
             }
         } else {
-            EstimateFare(&segments)
+            fare := EstimateFare(&segments)
+            rideFareEstimates = append(rideFareEstimates, FareEstimate{ID:previousRecord.ID, Fare: fare})
             segments = nil
         }
 
 
         previousRecord = &currentRecord
         lineCount++
+    }
+    for _, v := range(rideFareEstimates) {
+        fmt.Println("Ride with ID: ", v.ID, " Fare: ", v.Fare)
     }
 }
