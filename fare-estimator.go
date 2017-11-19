@@ -129,6 +129,13 @@ type FareEstimate struct {
     Fare float64
 }
 
+func (f FareEstimate) FareEstimateToStringArray() []string {
+    var array []string
+    array = append(array, strconv.Itoa(f.ID))
+    array = append(array, strconv.FormatFloat(f.Fare, 'f', 4, 64))
+    return array
+}
+
 func main() {
     file, err := os.Open("paths.csv")
     if err != nil {
@@ -211,4 +218,29 @@ func main() {
     for _, v := range(rideFareEstimates) {
         fmt.Println("Ride with ID: ", v.ID, " Fare: ", v.Fare)
     }
+
+    // Open the results file
+	resultsFile, err := os.OpenFile("estimated_fares.csv", os.O_CREATE|os.O_WRONLY, 0666)
+	if err != nil {
+        fmt.Println("Error:", err)
+        return
+    }
+    defer resultsFile.Close()
+    writer := csv.NewWriter(resultsFile)
+    for _, v := range(rideFareEstimates) {
+        if err := writer.Write(v.FareEstimateToStringArray()); err != nil {
+            fmt.Println("Error:", err)
+            return
+		}
+    }
+
+	// Write any buffered data to the underlying writer.
+	writer.Flush()
+
+	if err := writer.Error(); err != nil {
+        fmt.Println("Error:", err)
+        return
+	}
+
+
 }
