@@ -10,6 +10,7 @@ import (
     "github.com/umahmood/haversine"
 )
 
+// A Segment of two consecitive Records (points)
 type Segment struct {
     U float64
     DeltaS float64
@@ -22,7 +23,7 @@ func (s Segment) String() string {
 	return fmt.Sprintf("U: %v, DeltaS: %v, DeltaT: %v, T1: %v, T2: %v", s.U, s.DeltaS, s.DeltaT, s.T1, s.T2)
 }
 
-
+// A Record is a row of the csv and represents the position of the taxi at a given point
 type Record struct {
     ID int
     Lat float64
@@ -34,6 +35,7 @@ func (r Record) String() string {
 	return fmt.Sprintf("ID: %v, Lat: %v, Long: %v, Timestamp: %v", r.ID, r.Lat, r.Lng, r.Timestamp)
 }
 
+// StringArrayToRecord ransfroms an array of strings to a Record by pasing the strings accordingly
 func StringArrayToRecord(array []string) (Record, error){
     var record Record
     var err error
@@ -61,12 +63,19 @@ func StringArrayToRecord(array []string) (Record, error){
     return record, err
 }
 
+// Flag is the the standard charge at the beggining of a ride
 const Flag = 1.30
+// MinimumFare is the minimum ride fare
 const MinimumFare = 3.47
+// IdleChargePerHour is the charge of staying Idle
 const IdleChargePerHour = 11.90
+// NormalChargePerKilometer is the charge during the day sift
 const NormalChargePerKilometer = 0.74
+// NightChargePerKilometer is the charge during the night sift
 const NightChargePerKilometer = 1.30
 
+
+// EstimateSegmentFare estimates the fare for one segment
 func EstimateSegmentFare(segment *Segment) float64 {
     if segment.U <= 10.0 {
         return IdleChargePerHour * segment.DeltaT.Hours()
@@ -95,6 +104,7 @@ func EstimateSegmentFare(segment *Segment) float64 {
 }
 
 
+// EstimateFare loops a ride's segments and calculate total estimated fare
 func EstimateFare(segments *[]Segment) float64 {
     if segments == nil {
         return 0.0
