@@ -138,27 +138,40 @@ func (f FareEstimate) FareEstimateToStringArray() []string {
 }
 
 func main() {
-    file, err := os.Open("paths.csv")
+    // Init Arguments
+    resultsFileName := "estimated_fares.csv"
+    argsWithoutProg := os.Args[1:]
+    if len(argsWithoutProg) < 1 || len(argsWithoutProg) > 2{
+        fmt.Println("Usage: ", os.Args[0], " record_file [output_file]")
+        os.Exit(1)
+    }
+    if len(argsWithoutProg) == 2 {
+        resultsFileName = argsWithoutProg[1]
+    }
+    recordsFileName :=  argsWithoutProg[0]
+
+    // Open records file
+    file, err := os.Open(recordsFileName)
     if err != nil {
         log.Fatal(err)
     }
     // automatically call Close() at the end of current method
     defer file.Close()
-    //
+
+    // Initalize CSV reader
     reader := csv.NewReader(file)
-    // options are available at:
-    // http://golang.org/src/pkg/encoding/csv/reader.go?s=3213:3671#L94
-    reader.Comma = ','
+
     lineCount := 0
 
+    // Initalize booking cariables
     var rideFareEstimates []FareEstimate
     var segments []Segment
     var previousRecord *Record
     for {
-        // read just one record, but we could ReadAll() as well
         record, err := reader.Read()
         // end-of-file is fitted into err
         if err == io.EOF {
+            // Compute fare for the last ride
             fare := EstimateFare(&segments)
             rideFareEstimates = append(rideFareEstimates, FareEstimate{ID:previousRecord.ID, Fare: fare})
             segments = nil
@@ -217,7 +230,7 @@ func main() {
     }
 
     // Open the results file
-	resultsFile, err := os.OpenFile("estimated_fares.csv", os.O_CREATE|os.O_WRONLY, 0666)
+	resultsFile, err := os.OpenFile(resultsFileName, os.O_CREATE|os.O_WRONLY, 0666)
 	if err != nil {
         log.Fatal(err)
     }
